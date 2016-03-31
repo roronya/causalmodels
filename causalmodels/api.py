@@ -1,1 +1,0 @@
-from .lingam import DirectLiNGAM

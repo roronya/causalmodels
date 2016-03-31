@@ -8,7 +8,7 @@ causalmodels in Python.
 ## usage
 
     >>> import numpy as np
-    >>> import causalmodels.api as cm
+    >>> import causalmodels as cm
     >>> a = np.random.laplace(size=500)
     >>> b = np.random.laplace(size=500) + a
     >>> c = np.random.laplace(size=500) + a + b

@@ -10,7 +10,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='causalmodels',
-    version='0.0.1',
+    version='0.0.2',
     description='Causal models in Python',
     long_description=long_description,
     url='http://github.com/roronya/causalmodels',
