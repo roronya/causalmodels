@@ -6,13 +6,14 @@ from scipy import linalg
 import causalmodels.base.model as base
 
 
-class DirectLiNGAM(base.Model):
+class SparseDirectLiNGAM(base.Model):
     """
     implement of DirectLiNGAM.
     """
 
     def __init__(self):
         self.processes = 1
+        self.threshold = 0.2
 
     def fit(self, data):
         """
@@ -173,10 +174,20 @@ class DirectLiNGAM(base.Model):
                     min = t
             return min[1]
 
+        def find_indirect_causal_effect(causal_effect_matrix):
+            adjust_matrix = causal_effect_matrix.astype(bool)
+            indirect_causal_effect = np.zeros(causal_effect_matrix.shape).astype(bool)
+            A_n = adjust_matrix
+            for n in range(len(adjust_matrix) - 1):
+                A_n = A_n.dot(adjust_matrix)
+                indirect_causal_effect = np.logical_or(indirect_causal_effect, A_n)
+            return indirect_causal_effect
+
         n = data.shape[0]
         B = np.zeros((n, n))
         order = []
         X = {i: data[i] for i in range(n)}
+        X_org = X.copy()
 
         while (len(X) > 0):
             k = find_most_independent_variable(X, self.processes)
@@ -195,6 +206,27 @@ class DirectLiNGAM(base.Model):
                 if j < i:
                     inference[i][j] = B[order[i]][order[j]]
 
+        # エッジを枝刈りする
+        for i in range(n):
+            for j in range(n):
+                if inference[i][j] < self.threshold:
+                    inference[i][j] = 0
+        indirect_causal_effect = find_indirect_causal_effect(inference)
+
+        # indirect_causal_effect が true のところを見つけて
+        for i in range(n):
+            for j in range(n):
+                if indirect_causal_effect[i][j]:
+                    R = X_org[order[i]]
+                    for k in range(n):
+                        if k == j or k == i:
+                            continue
+                        if inference[i][k] > 0 and not indirect_causal_effect[i][k]:
+                            R = calc_residual(R, X_org[order[k]])
+                    inference[i][j] = calc_causal_effect(R, X_org[order[j]])
+                    if inference[i][j] < self.threshold:
+                        inference[i][j] = 0
+
         results = base.Results(causal_order=order,
                                causal_inference_matrix=inference)
 
@@ -205,4 +237,8 @@ class DirectLiNGAM(base.Model):
 
     def set_processes(self, n):
         self.processes = n
+        return self
+
+    def set_threshold(self, n):
+        self.threshold = n
         return self
