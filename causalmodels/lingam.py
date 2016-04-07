@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import scipy.linalg
 from causalmodels.interface import ModelInterface
 from causalmodels.result import Result
 from causalmodels.exception import *
@@ -97,3 +98,39 @@ class DirectLiNGAM(ModelInterface):
         if self.matrix is None:
             raise NotYetFitError()
         return Result(order=self.order, matrix=self.matrix, labels=self.labels)
+
+class SparseDirectLiNGAM(DirectLiNGAM):
+    def fit(self, data, labels, threshold = 0.2):
+        super().fit(data, labels)
+
+        # B の閾値以下の値を 0 設定する
+        B = self.matrix.copy()
+        for i, b_i in enumerate(B):
+            for j, b_i_j in enumerate(b_i):
+                if b_i_j < threshold:
+                    B[i][j] = 0
+
+        # 直接的因果関係と間接的因果関係の両方を持つノードを発見する
+        A = B.astype(bool) # 隣接行列
+        indirect_effect = np.zeros(B.shape).astype(bool)
+        A_n = A.copy()
+        for n in range(len(A) - 1):
+            A_n = A_n.dot(A)
+            indirect_effect = np.logical_or(indirect_effect, A_n)
+
+        # 因果効果を計算し直す
+        X = data.copy()
+        K = self.order
+        for i,j in [(i, j) for i in K for j in K if i != j]:
+            if indirect_effect[i][j]:
+                x_i = X[i]
+                for k in K:
+                    if k != i and k != j and B[i][k] > 0 and not indirect_effect[i][k]:
+                        x_k = X[k]
+                        x_i = x_i - (np.cov(x_i, x_k)[0][1] / np.var(x_k)) * x_k
+                x_j = X[j]
+                B[i][j] = np.cov(x_i, x_j, bias=1)[0][1] / np.var(x_j)
+                if B[i][j] < 0.2:
+                    B[i][j] = 0
+        self.matrix = B
+        return self.predict()
