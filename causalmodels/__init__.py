@@ -1,2 +1,3 @@
-from causalmodels.lingam.direct_lingam import DirectLiNGAM
-from causalmodels.lingam.sparse_direct_lingam import SparseDirectLiNGAM
+from causalmodels.lingam import DirectLiNGAM
+from causalmodels.result import Result
+from causalmodels.exception import *

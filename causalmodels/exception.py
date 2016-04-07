@@ -1,0 +1,2 @@
+class NotYetFitError(Exception):
+    pass

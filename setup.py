@@ -10,7 +10,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='causalmodels',
-    version='0.0.3',
+    version='0.1.0',
     description='Causal models in Python',
     long_description=long_description,
     url='http://github.com/roronya/causalmodels',
@@ -24,7 +24,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
     ],
-    keywords='niconico api',
+    keywords='causality machine	learning',
     packages=find_packages(exclude=['tests*']),
-    install_requires=['numpy', 'scipy'],
+    install_requires=['numpy', 'scipy', 'graphviz'],
 )

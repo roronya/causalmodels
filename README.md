@@ -12,9 +12,10 @@ causalmodels in Python.
     >>> a = np.random.laplace(size=500)
     >>> b = np.random.laplace(size=500) + a
     >>> c = np.random.laplace(size=500) + a + b
-    >>> data = [c, b, a]
+    >>> data = np.array([c, b, a])
     >>>
     >>> model = cm.DirectLiNGAM()
     >>> results = model.fit(data)
-    >>> results.get_causal_order()
+    >>> results.order
     [2, 1, 0]
+    >>> result.draw()
