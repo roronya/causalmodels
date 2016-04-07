@@ -22,3 +22,6 @@ class Result(ResultInterface):
                                str(self.matrix[i][j]))
         graph.render(output_name)
         return graph
+
+    def set_labels(self, labels):
+        self.labels = labels
