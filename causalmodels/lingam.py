@@ -130,7 +130,6 @@ class SparseDirectLiNGAM(DirectLiNGAM):
                         x_i = x_i - (np.cov(x_i, x_k)[0][1] / np.var(x_k)) * x_k
                 x_j = X[j]
                 B[i][j] = np.cov(x_i, x_j, bias=1)[0][1] / np.var(x_j)
-                if B[i][j] < 0.2:
-                    B[i][j] = 0
+                if B[i][j] < 0.2: B[i][j] = 0
         self.matrix = B
         return self.predict()
