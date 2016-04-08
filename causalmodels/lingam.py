@@ -67,7 +67,7 @@ class DirectLiNGAM(ModelInterface):
             return (-1/2) * (log_K_k - log_D_k)
         # inner function --!>
 
-        X = data.copy()
+        X = data.T.copy()
         K = []
         n = data.shape[0]
         B = np.zeros((n, n))
