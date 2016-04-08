@@ -1,9 +1,9 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg
-from causalmodels.interface import ModelInterface
-from causalmodels.result import Result
-from causalmodels.exception import *
+from .interface import ModelInterface
+from .result import Result
+from .exception import *
 
 class DirectLiNGAM(ModelInterface):
     def __init__(self):
