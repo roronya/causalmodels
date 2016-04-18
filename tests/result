@@ -3,6 +3,7 @@ digraph {
 	a [label=a]
 	b [label=b]
 	c [label=c]
-		a -> b [label=0.956630688192]
-		b -> c [label=1.05645881436]
+		a -> b [label=0.633081058772]
+		a -> c [label=0.637439970755]
+		b -> c [label=0.552122025841]
 }
