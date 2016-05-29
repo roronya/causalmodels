@@ -4,9 +4,10 @@ import causalmodels as cm
 
 a = np.random.laplace(size=100)
 b = np.random.laplace(size=100) + a
-c = np.random.laplace(size=100) + a + b
+c = np.random.laplace(size=100) + b
 data = pd.DataFrame({'a':a, 'b': b, 'c': c})
-X = data.values
-model = cm.SparseDirectLiNGAM()
+model = cm.DirectLiNGAM()
 result = model.fit(data.values, data.columns)
+print(result.order)
+print(result.matrix)
 result.draw()
