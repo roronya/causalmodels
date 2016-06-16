@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg
+from tqdm import tqdm
 from causalmodels.interface import ModelInterface
 from causalmodels.result import Result
 from causalmodels.exception import *
@@ -45,7 +46,7 @@ def MIkernel(y_1, y_2, kappa=0.02, sigma=0.5):
     return (-1 / 2) * (log_K_k - log_D_k)
 
 def Tkernel(X, j, U):
-    Tkernel = np.sum([MIkernel(X[:, j], residual(X[:, j], X[:, i])) for i in U])
+    Tkernel = np.sum([MIkernel(X[:, j], residual(X[:, j], X[:, i])) for i in tqdm(U, desc='calcurating MIkernel')])
     return Tkernel
 
 class DirectLiNGAM(ModelInterface):
@@ -62,15 +63,13 @@ class DirectLiNGAM(ModelInterface):
         K = []
         n = X.shape[1]
         B = np.zeros((n,n))
-        while True:
+        for i in tqdm(range(n), desc='calcurating 1st independence'):
             U = [k for k, v in enumerate(X.T) if k not in K]
             X_m_index = sorted([(Tkernel(X, j, U), j) for j in U])[0][1]
             for i in U:
                 if i != X_m_index:
                     X[:, i] = residual(X[:, i], X[:, X_m_index])
             K.append(X_m_index)
-            if len(K) == X.shape[1]:
-                break
         # data を K 順に並び替える
         X = data[:, K]
         for i, X_i in reversed(list(enumerate(X.T))):

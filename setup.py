@@ -26,5 +26,5 @@ setup(
     ],
     keywords='causality machine	learning causalmodels',
     packages=find_packages(exclude=['tests*']),
-    install_requires=['numpy', 'scipy', 'graphviz'],
+    install_requires=['numpy', 'scipy', 'graphviz', 'tqdm'],
 )
