@@ -1,2 +1,5 @@
-class NotYetFitError(Exception):
+class Error(Exception):
+    pass
+
+class NotYetFitError(Error):
     pass

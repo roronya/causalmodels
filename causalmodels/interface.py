@@ -1,5 +1,3 @@
-import numpy as np
-
 class ModelInterface:
     """
     Interface of model.
