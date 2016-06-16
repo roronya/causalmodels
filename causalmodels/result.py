@@ -21,5 +21,5 @@ class Result(ResultInterface):
                     graph.edge(str(self.sorted_labels[j]),
                                str(self.sorted_labels[i]),
                                str(self.matrix[i][j]))
-        graph.render(output_name)
+        graph.render(output_name, cleanup=True)
         return graph
