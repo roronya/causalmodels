@@ -1,6 +1,6 @@
 import os
 from graphviz import Digraph
-from .interface import ResultInterface
+from causalmodels.interface import ResultInterface
 
 
 class Result(ResultInterface):

@@ -1,9 +1,9 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg
-from .interface import ModelInterface
-from .result import Result
-from .exception import *
+from causalmodels.interface import ModelInterface
+from causalmodels.result import Result
+from causalmodels.exception import *
 
 def residual(X_j, X_i):
     return X_i - (np.cov(X_i, X_j, bias=1)[0][1] / np.var(X_j)) * X_j
