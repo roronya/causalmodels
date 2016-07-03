@@ -2,6 +2,7 @@ import numpy as np
 import scipy as sp
 import scipy.linalg
 import sklearn.linear_model as lm
+import statsmodels.tsa.api as tsa
 from tqdm import tqdm, trange
 from causalmodels.interface import ModelInterface
 from causalmodels.result import Result
@@ -107,41 +108,16 @@ class DirectLiNGAM(ModelInterface):
             raise NotYetFitError()
         return Result(order=self.order, matrix=self.matrix, sorted_matrix=self.sorted_matrix, sorted_data=self.sorted_data, sorted_labels=self.sorted_labels)
 
+class SVARDirectLiNGAM(DirectLiNGAM):
+    def fit_var(self, data, maxlags=15, ic='aic'):
+        var_model = tsa.VAR(data)
+        var_estimation = var_model.fit(maxlags=maxlags, ic=ic)
+        return var_estimation
 
-class SparseDirectLiNGAM(DirectLiNGAM):
-
-    def fit(self, data, labels, threshold=0.2):
-        super().fit(data, labels)
-
-        # B の閾値以下の値を 0 設定する
-        B = self.matrix.copy()
-        for i, B_i in enumerate(B):
-            for j, B_i_j in enumerate(B_i):
-                if B_i_j < threshold:
-                    B[i][j] = 0
-
-        # 直接的因果関係と間接的因果関係の両方を持つノードを発見する
-        A = B.astype(bool)  # 隣接行列
-        indirect_effect = np.zeros(B.shape).astype(bool)
-        A_n = A.copy()
-        for n in range(len(A) - 1):
-            A_n = A_n.dot(A)
-            indirect_effect = np.logical_or(indirect_effect, A_n)
-
-        # 因果効果を計算し直す
-        X = data.copy()
-        K = self.order
-        for i, j in [(i, j) for i in K for j in K if i != j]:
-            if indirect_effect[i][j]:
-                X_i = X[:, i]
-                for k in K:
-                    if k != i and k != j and B[i][k] > 0 and not indirect_effect[i][k]:
-                        X_k = X[:, k]
-                        X_i = X_i - (np.cov(X_i, X_k)
-                                     [0][1] / np.var(X_k)) * X_k
-                X_j = X[:, j]
-                B[i][j] = np.cov(X_i, X_j, bias=1)[0][1] / np.var(X_j)
-                if B[i][j] < 0.2:
-                    B[i][j] = 0
-        self.matrix = B
-        return self.predict()
+    def fit(self, data, labels=None, regression='LinearRegression', maxlags=15, ic='aic'):
+        var_estimation = self.fit_var(data, maxlags=maxlags, ic=ic)
+        lag_order = var_estimation.k_ar
+        data = data[lag_order:] - var_estimation.forecast(data[0:lag_order], data.shape[0]-lag_order)
+        result = super(SVARDirectLiNGAM, self).fit(data, labels=labels, regression=regression)
+        result.var_estimation = var_estimation
+        return result

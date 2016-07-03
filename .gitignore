@@ -69,3 +69,6 @@ target/
 
 # pyenv
 .python-version
+
+# png
+tests/*png
