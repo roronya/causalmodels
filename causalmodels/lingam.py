@@ -46,7 +46,7 @@ def MIkernel(y_1, y_2, kappa=0.02, sigma=0.5):
     return (-1 / 2) * (log_K_k - log_D_k)
 
 def Tkernel(X, j, U):
-    Tkernel = np.sum([MIkernel(X[:, j], residual(X[:, j], X[:, i])) for i in tqdm(U, desc='calcurating MIkernel')])
+    Tkernel = np.sum([MIkernel(X[:, j], residual(X[:, j], X[:, i])) for i in U])
     return Tkernel
 
 class DirectLiNGAM(ModelInterface):
@@ -65,7 +65,7 @@ class DirectLiNGAM(ModelInterface):
         B = np.zeros((n,n))
         for i in tqdm(range(n), desc='calcurating 1st independence'):
             U = [k for k, v in enumerate(X.T) if k not in K]
-            X_m_index = sorted([(Tkernel(X, j, U), j) for j in U])[0][1]
+            X_m_index = sorted([(Tkernel(X, j, U), j) for j in tqdm(U, desc='calcurating Tkernel value')])[0][1]
             for i in U:
                 if i != X_m_index:
                     X[:, i] = residual(X[:, i], X[:, X_m_index])
