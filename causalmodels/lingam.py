@@ -80,16 +80,21 @@ class DirectLiNGAM(ModelInterface):
                 if j == i:
                     break
                 B[i][j] = c[j, 0]
+
+        # 元の順に戻す
+        self.matrix = np.zeros(B.shape)
+        for i, k in enumerate(K):
+            self.matrix[k] = B[i]
         self.order = K
-        self.matrix = B
+        self.sorted_matrix = B
         self.sorted_data = X
-        self.sorted_labels = labels[K]
+        self.sorted_labels = labels[K] if labels is not None else None
         return self.predict()
 
     def predict(self):
         if self.matrix is None:
             raise NotYetFitError()
-        return Result(order=self.order, matrix=self.matrix, sorted_data=self.sorted_data, sorted_labels=self.sorted_labels)
+        return Result(order=self.order, matrix=self.matrix, sorted_matrix=self.sorted_matrix, sorted_data=self.sorted_data, sorted_labels=self.sorted_labels)
 
 
 class SparseDirectLiNGAM(DirectLiNGAM):
