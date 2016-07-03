@@ -17,5 +17,5 @@ class ResultInterface:
     Interface of results.
     model must be return Results obejct.
     """
-    def draw():
+    def plot():
         raise NotImplementedError()
