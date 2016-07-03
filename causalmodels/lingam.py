@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 import scipy.linalg
 import sklearn.linear_model as lm
-from tqdm import tqdm
+from tqdm import tqdm, trange
 from causalmodels.interface import ModelInterface
 from causalmodels.result import Result
 from causalmodels.exception import *
@@ -56,32 +56,18 @@ class DirectLiNGAM(ModelInterface):
         self.order = None
         self.matrix = None
 
-    """
-    implement of DirectLiNGAM
-    """
-    def fit(self, data, labels=None, regression=None):
-        X = data.copy()
-        K = []
+    def estimate_coefficient(self, X, regression, alpha=0.1):
         n = X.shape[1]
         B = np.zeros((n,n))
-        for i in tqdm(range(n), desc='calcurating 1st independence'):
-            U = [k for k, v in enumerate(X.T) if k not in K]
-            X_m_index = sorted([(Tkernel(X, j, U), j) for j in tqdm(U, desc='calcurating Tkernel value')])[0][1]
-            for i in U:
-                if i != X_m_index:
-                    X[:, i] = residual(X[:, i], X[:, X_m_index])
-            K.append(X_m_index)
-        # data を K 順に並び替える
-        X = data[:, K]
         for i, X_i in reversed(list(enumerate(X.T))):
             if i == 0:
                 break
             A = X[:, :i]
             b = X[:, i]
             if regression == 'lasso':
-                model = lm.Lasso()
+                model = lm.Lasso(alpha=alpha)
             elif regression == 'ridge':
-                model = lm.Ridge()
+                model = lm.Ridge(alpha=alpha)
             else:
                 model = lm.LinearRegression()
             model.fit(A, b)
@@ -90,6 +76,21 @@ class DirectLiNGAM(ModelInterface):
                 if j == i:
                     break
                 B[i][j] = c[j]
+        return B
+
+    def fit(self, data, labels=None, regression='LinearRegression'):
+        X = data.copy()
+        K = []
+        for i in trange(X.shape[1], desc='calcurating 1st independence'):
+            U = [k for k, v in enumerate(X.T) if k not in K]
+            X_m_index = sorted([(Tkernel(X, j, U), j) for j in tqdm(U, desc='calcurating Tkernel value')])[0][1]
+            for i in U:
+                if i != X_m_index:
+                    X[:, i] = residual(X[:, i], X[:, X_m_index])
+            K.append(X_m_index)
+        # data を K 順に並び替える
+        X = data[:, K]
+        B = self.estimate_coefficient(X, regression)
 
         # 元の順に戻す
         self.matrix = np.zeros(B.shape)
