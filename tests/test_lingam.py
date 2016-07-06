@@ -7,7 +7,7 @@ b = np.random.laplace(size=300) + a
 c = np.random.laplace(size=300) + a + b
 data = pd.DataFrame({'a':a, 'b': b, 'c': c})
 model = cm.DirectLiNGAM()
-result = model.fit(data.values, data.columns, regression='lasso')
+result = model.fit(data.values, data.columns, regression='lasso', threshold=1)
 print(result.order)
 print(result.sorted_matrix)
 result.plot()
