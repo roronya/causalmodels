@@ -57,7 +57,7 @@ class DirectLiNGAM(ModelInterface):
         self.order = None
         self.matrix = None
 
-    def estimate_coefficient(self, X, regression, alpha=0.1):
+    def estimate_coefficient(self, X, regression, alpha=0.1, max_iter=1000):
         n = X.shape[1]
         B = np.zeros((n,n))
         for i, X_i in reversed(list(enumerate(X.T))):
@@ -66,7 +66,7 @@ class DirectLiNGAM(ModelInterface):
             A = X[:, :i]
             b = X[:, i]
             if regression == 'lasso':
-                model = lm.Lasso(alpha=alpha)
+                model = lm.Lasso(alpha=alpha, max_iter=max_iter)
             elif regression == 'ridge':
                 model = lm.Ridge(alpha=alpha)
             else:
