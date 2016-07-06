@@ -114,10 +114,10 @@ class SVARDirectLiNGAM(DirectLiNGAM):
         var_estimation = var_model.fit(maxlags=maxlags, ic=ic)
         return var_estimation
 
-    def fit(self, data, labels=None, regression='LinearRegression', maxlags=15, ic='aic'):
+    def fit(self, data, labels=None, regression='LinearRegression', alpha=0.1, max_iter=1000, maxlags=15, ic='aic'):
         var_estimation = self.fit_var(data, maxlags=maxlags, ic=ic)
         lag_order = var_estimation.k_ar
         data = data[lag_order:] - var_estimation.forecast(data[0:lag_order], data.shape[0]-lag_order)
-        result = super(SVARDirectLiNGAM, self).fit(data, labels=labels, regression=regression)
+        result = super(SVARDirectLiNGAM, self).fit(data, labels=labels, regression=regression, alpha=alpha, max_iter=max_iter)
         result.var_estimation = var_estimation
         return result
