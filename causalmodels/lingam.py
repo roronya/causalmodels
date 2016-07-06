@@ -79,7 +79,7 @@ class DirectLiNGAM(ModelInterface):
                 B[i][j] = c[j]
         return B
 
-    def fit(self, data, labels=None, regression='LinearRegression', alpha=0.1, max_iter=1000, threshold=0):
+    def fit(self, data, labels=None, regression='LinearRegression', alpha=0.1, max_iter=1000):
         X = data.copy()
         K = []
         for i in trange(X.shape[1], desc='calcurating 1st independence'):
@@ -92,11 +92,6 @@ class DirectLiNGAM(ModelInterface):
         # data を K 順に並び替える
         X = data[:, K]
         B = self.estimate_coefficient(X, regression=regression, alpha=alpha, max_iter=max_iter)
-        if threshold:
-            for i, B_i in enumerate(B):
-                for j, B_i_j in enumerate(B_i):
-                    if np.abs(B_i_j) < threshold:
-                        B[i][j] = 0
         # 元の順に戻す
         self.matrix = np.zeros(B.shape)
         for i, k in enumerate(K):
