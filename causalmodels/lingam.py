@@ -52,11 +52,6 @@ def Tkernel(X, j, U):
     return Tkernel
 
 class DirectLiNGAM(ModelInterface):
-
-    def __init__(self):
-        self.order = None
-        self.matrix = None
-
     def estimate_coefficient(self, X, regression, alpha=0.1, max_iter=1000):
         n = X.shape[1]
         B = np.zeros((n,n))
@@ -93,19 +88,15 @@ class DirectLiNGAM(ModelInterface):
         X = data[:, K]
         B = self.estimate_coefficient(X, regression=regression, alpha=alpha, max_iter=max_iter)
         # 元の順に戻す
-        self.matrix = np.zeros(B.shape)
+        matrix = np.zeros(B.shape)
         for i, k in enumerate(K):
-            self.matrix[k] = B[i]
-        self.order = K
-        self.sorted_matrix = B
-        self.sorted_data = X
-        self.sorted_labels = labels[K] if labels is not None else None
-        return self.predict()
-
-    def predict(self):
-        if self.matrix is None:
-            raise NotYetFitError()
-        return Result(order=self.order, matrix=self.matrix, sorted_matrix=self.sorted_matrix, sorted_data=self.sorted_data, sorted_labels=self.sorted_labels)
+            matrix[k] = B[i]
+        order = K
+        self.result = Result(order=order,
+                             matrix=matrix,
+                             data=data,
+                             labels=labels)
+        return self.result
 
 class SVARDirectLiNGAM(DirectLiNGAM):
     def fit_var(self, data, maxlags=15, ic='aic'):
