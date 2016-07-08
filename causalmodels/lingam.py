@@ -53,9 +53,10 @@ def Tkernel(X, j, U):
 
 class DirectLiNGAM(ModelInterface):
 
-    def __init__(self):
+    def __init__(self, data):
         self.order = None
         self.matrix = None
+        self.data = data
 
     def estimate_coefficient(self, X, regression, alpha=0.1, max_iter=1000):
         n = X.shape[1]
@@ -65,9 +66,9 @@ class DirectLiNGAM(ModelInterface):
                 break
             A = X[:, :i]
             b = X[:, i]
-            if regression == 'lasso':
+            if regression == "lasso":
                 model = lm.Lasso(alpha=alpha, max_iter=max_iter)
-            elif regression == 'ridge':
+            elif regression == "ridge":
                 model = lm.Ridge(alpha=alpha)
             else:
                 model = lm.LinearRegression()
@@ -79,18 +80,18 @@ class DirectLiNGAM(ModelInterface):
                 B[i][j] = c[j]
         return B
 
-    def fit(self, data, labels=None, regression='LinearRegression', alpha=0.1, max_iter=1000):
-        X = data.copy()
+    def fit(self, labels=None, regression="LinearRegression", alpha=0.1, max_iter=1000):
+        X = self.data.copy()
         K = []
-        for i in trange(X.shape[1], desc='calcurating 1st independence'):
+        for i in trange(X.shape[1], desc="calcurating 1st independence"):
             U = [k for k, v in enumerate(X.T) if k not in K]
-            X_m_index = sorted([(Tkernel(X, j, U), j) for j in tqdm(U, desc='calcurating Tkernel value')])[0][1]
+            X_m_index = sorted([(Tkernel(X, j, U), j) for j in tqdm(U, desc="calcurating Tkernel value")])[0][1]
             for i in U:
                 if i != X_m_index:
                     X[:, i] = residual(X[:, i], X[:, X_m_index])
             K.append(X_m_index)
         # data を K 順に並び替える
-        X = data[:, K]
+        X = self.data[:, K]
         B = self.estimate_coefficient(X, regression=regression, alpha=alpha, max_iter=max_iter)
         # 元の順に戻す
         self.matrix = np.zeros(B.shape)
@@ -100,23 +101,51 @@ class DirectLiNGAM(ModelInterface):
         self.sorted_matrix = B
         self.sorted_data = X
         self.sorted_labels = labels[K] if labels is not None else None
-        return self.predict()
-
-    def predict(self):
-        if self.matrix is None:
-            raise NotYetFitError()
-        return Result(order=self.order, matrix=self.matrix, sorted_matrix=self.sorted_matrix, sorted_data=self.sorted_data, sorted_labels=self.sorted_labels)
+        self.result =  Result(order=self.order,
+                              matrix=self.matrix,
+                              sorted_matrix=self.sorted_matrix,
+                              sorted_data=self.sorted_data,
+                              sorted_labels=self.sorted_labels)
+        return self.result
 
 class SVARDirectLiNGAM(DirectLiNGAM):
-    def fit_var(self, data, maxlags=15, ic='aic'):
+    def fit_var(self, data, maxlags=15, ic="aic"):
         var_model = tsa.VAR(data)
-        var_estimation = var_model.fit(maxlags=maxlags, ic=ic)
-        return var_estimation
+        var_result = var_model.fit(maxlags=maxlags, ic=ic)
+        return var_result
 
-    def fit(self, data, labels=None, regression='LinearRegression', alpha=0.1, max_iter=1000, maxlags=15, ic='aic'):
-        var_estimation = self.fit_var(data, maxlags=maxlags, ic=ic)
+    def fit(self, labels=None, regression="LinearRegression", alpha=0.1, max_iter=1000, maxlags=15, ic="aic"):
+        var_estimation = self.fit_var(self.data, maxlags=maxlags, ic=ic)
         lag_order = var_estimation.k_ar
-        data = data[lag_order:] - var_estimation.forecast(data[0:lag_order], data.shape[0]-lag_order)
-        result = super(SVARDirectLiNGAM, self).fit(data, labels=labels, regression=regression, alpha=alpha, max_iter=max_iter)
-        result.var_estimation = var_estimation
+        data = self.data[lag_order:] - var_estimation.forecast(self.data[0:lag_order], self.data.shape[0]-lag_order)
+        super_result = super(SVARDirectLiNGAM, self).fit(data, labels=labels, regression=regression, alpha=alpha, max_iter=max_iter)
+        self.result.var_estimation = var_estimation
         return result
+
+class SVARDirectLiNGAMResult(ResultInterface):
+    def __init__(self, instantaneou_order, matrixes, data, labels):
+        self.instantaneou_order = instantaneou_order
+        self.matrixes = matrixes
+        self.data = data
+        self.labels = labels
+
+    def plot(self, output_name="result", format="png", threshold=0):
+        graph = Digraph()
+        tau = matrixes.shape[0]
+        lags = ["t"] + ["t-{0}".format(t) for t in range(1, tau)]
+        subgraphs = [Digraph("cluter_{0}".format(lag)) for lag in lags]
+        for lag, subgraph in zip(lags, subgraph):
+            subgraph.node("cluster{0}".format(lag))
+            for label in labels:
+                subgraph.node("{0}({1})".format(label, lag))
+            graph.subgraph(subgraph)
+        for lag, subgraph, matrix in zip(lags, sugraphgs, self.matrixes):
+            for m_i in matrix:
+                for m_i_j in matrix:
+                    if m_i_j != 0:
+                        if lag == "t":
+                            graph.edge("{0}({1})".format(labels[j], lag), "{0}({1})".format(labels[i], lag), str(m_i_j))
+                        else:
+                            graph.edge("{0}({1})".format(labels[j], lag), "{0}({1})".format(labels[i], "t"), str(m_i_j))
+        graph.render(output_name, cleanup=True)
+        return graph

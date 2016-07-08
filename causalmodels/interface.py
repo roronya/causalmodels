@@ -8,14 +8,11 @@ class ModelInterface:
         """
         raise NotImplementedError()
 
-    def predict(self):
-        raise NotImplementedError()
-
 
 class ResultInterface:
     """
     Interface of results.
     model must be return Results obejct.
     """
-    def plot():
+    def plot(self):
         raise NotImplementedError()
