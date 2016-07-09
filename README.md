@@ -14,8 +14,8 @@ causalmodels in Python.
     >>> b = np.random.laplace(size=500) + a
     >>> c = np.random.laplace(size=500) + a + b
     >>> data = pd.DataFrame({'a': a, 'b': b, 'c': c})
-    >>> model = cm.DirectLiNGAM()
-    >>> results = model.fit(data.values, data.columns)
+    >>> model = cm.DirectLiNGAM(data.values, data.columns)
+    >>> results = model.fit()
     >>> results.order
     [2, 1, 0]
-    >>> result.draw()
+    >>> result.plot()
