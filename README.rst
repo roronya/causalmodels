@@ -27,4 +27,3 @@ usage
     >>> results.order
     [2, 1, 0]
     >>> result.plot()
-

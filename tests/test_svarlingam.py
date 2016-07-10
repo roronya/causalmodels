@@ -10,6 +10,7 @@ c[2:] = c[2:] + b[:-2] + a[:-2]
 data = pd.DataFrame({"a":a, "b": b, "c": c})
 model = cm.SVARDirectLiNGAM(data.values, data.columns)
 result = model.fit(regression="lasso")
-print(result.instantaneou_order)
+print(result.instantaneous_order)
 print(result.matrixes)
 result.plot(threshold=0.3)
+result.plot(threshold=0.3, separate=True)

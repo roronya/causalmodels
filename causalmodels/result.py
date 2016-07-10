@@ -12,7 +12,9 @@ class Result(ResultInterface):
         self.labels = labels
 
     def plot(self, output_name="result", format="png", threshold=0):
-        graph = Digraph(format=format, engine="dot")
+        graph = Digraph(format=format)
+        graph.attr("graph", layout="dot")
+        graph.attr("node", shape="circle")
         for label in self.labels:
             graph.node(label)
         for i, m_i in enumerate(self.matrix):
