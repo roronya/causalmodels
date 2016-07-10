@@ -5,8 +5,8 @@ import causalmodels as cm
 a = np.random.laplace(size=100)
 b = np.random.laplace(size=100)
 c = np.random.laplace(size=100)
-a = a + b + c
 b = b + c
+a = a + b + c
 data = pd.DataFrame({"a":a, "b": b, "c": c})
 model = cm.DirectLiNGAM(data.values, data.columns)
 result = model.fit(regression="lasso")

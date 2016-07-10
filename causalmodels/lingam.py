@@ -58,7 +58,8 @@ class DirectLiNGAM(ModelInterface):
         self.data = np.array(data)
         self.labels = np.array(labels) if labels is not None else np.array([str(i) for i in range(data.shape[1])])
 
-    def estimate_coefficient(self, X, regression, alpha=0.1, max_iter=1000):
+    def estimate_coefficient(self, regression, alpha=0.1, max_iter=1000):
+        X = self.data[:, self.order].copy()
         n = X.shape[1]
         coef = np.zeros((n, n))
         for i, X_i in reversed(list(enumerate(X.T))):
@@ -86,13 +87,13 @@ class DirectLiNGAM(ModelInterface):
         for i in trange(X.shape[1], desc="calcurating 1st independence"):
             U = [k for k, v in enumerate(X.T) if k not in K]
             X_m_index = sorted([(Tkernel(X, j, U), j) for j in tqdm(U, desc="calcurating Tkernel value")])[0][1]
-            for i in U:
-                if i != X_m_index:
-                    X[:, i] = residual(X[:, i], X[:, X_m_index])
+            for k in U:
+                if k != X_m_index:
+                    X[:, k] = residual(X[:, k], X[:, X_m_index])
             K.append(X_m_index)
         # data を K 順に並び替える
-        X = self.data[:, K]
-        B = self.estimate_coefficient(X, regression=regression, alpha=alpha, max_iter=max_iter)
+        self.order = K
+        B = self.estimate_coefficient(regression=regression, alpha=alpha, max_iter=max_iter)
         # 元の順に戻す
         P = np.eye(len(K))[K]
         B = np.dot(np.dot(P.T, B), P)
