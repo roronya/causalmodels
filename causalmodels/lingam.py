@@ -144,14 +144,19 @@ class SVARDirectLiNGAMResult(ResultInterface):
     def plot(self, output_name="result", format="png", separate=False, threshold=0):
         if separate:
             instantaneous_matrix = self.matrixes[0]
-            instantaneous_graph = Digraph("cluster_t")
+            instantaneous_graph = Digraph("cluster_t", format=format)
             instantaneous_graph.attr("node", shape="circle")
+            for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
+                instantaneous_graph.edge("{label}(t)".format(label=src),
+                                         "{label}(t)".format(label=dst),
+                                         style="invis")
             for i, m_i in enumerate(instantaneous_matrix):
                 for j, m_i_j in enumerate(m_i):
                     if np.abs(m_i_j) > threshold:
                         instantaneous_graph.edge("{label}(t)".format(label=self.labels[j]),
                                                  "{label}(t)".format(label=self.labels[i]),
                                                  str(round(m_i_j, 3)))
+            instantaneous_graph.render("{output_name}(t)".format(output_name=output_name), cleanup=True)
             tau = self.matrixes.shape[0]
             lags = ["t_{0}".format(t) for t in range(1, tau)]
             layers = [Digraph("cluster_{lag}".format(lag=lag)) for lag in lags]
@@ -162,18 +167,22 @@ class SVARDirectLiNGAMResult(ResultInterface):
                     layer.node("{label}({lag})".format(label=label, lag=lag))
                 graph.subgraph(instantaneous_graph)
                 graph.subgraph(layer)
-                graph.attr("graph", layout="dot", splines="true", overlap="false", concentrate="true")
+                graph.attr("graph", layout="dot", splines="true", overlap="false")
+                for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
+                    graph.edge("{label}({lag})".format(label=src, lag=lag),
+                               "{label}({lag})".format(label=dst, lag=lag),
+                               style="invis")
                 for i, m_i in enumerate(matrix):
                     for j, m_i_j in enumerate(m_i):
                         if np.abs(m_i_j) > threshold:
                             graph.edge("{label}({lag})".format(label=self.labels[j], lag=lag),
-                                                     "{label}({lag})".format(label=self.labels[i], lag="t"),
-                                                     str(round(m_i_j, 3)))
+                                       "{label}({lag})".format(label=self.labels[i], lag="t"),
+                                        str(round(m_i_j, 3)))
                 graph.render("{output_name}({lag})".format(output_name=output_name, lag=lag), cleanup=True)
             return graphs
         else:
             graph = Digraph(format=format)
-            graph.attr("graph", layout="dot", splines="true", overlap="false", concentrate="true")
+            graph.attr("graph", layout="dot", splines="true", overlap="false")
             graph.attr("node", shape="circle")
             tau = self.matrixes.shape[0]
             lags = ["t"] + ["t_{0}".format(t) for t in range(1, tau)]
@@ -185,6 +194,10 @@ class SVARDirectLiNGAMResult(ResultInterface):
             for layer in layers:
                 graph.subgraph(layer)
             for lag, matrix in zip(lags, self.matrixes):
+                for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
+                    graph.edge("{label}({lag})".format(label=src, lag=lag),
+                               "{label}({lag})".format(label=dst, lag=lag),
+                               style="invis")
                 for i, m_i in enumerate(matrix):
                     for j, m_i_j in enumerate(m_i):
                         if np.abs(m_i_j) > threshold:
