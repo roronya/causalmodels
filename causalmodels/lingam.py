@@ -144,14 +144,19 @@ class SVARDirectLiNGAMResult(ResultInterface):
     def plot(self, output_name="result", format="png", separate=False, threshold=0):
         if separate:
             instantaneous_matrix = self.matrixes[0]
-            instantaneous_graph = Digraph("cluster_t")
+            instantaneous_graph = Digraph("cluster_t", format=format)
             instantaneous_graph.attr("node", shape="circle")
+            for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
+                instantaneous_graph.edge("{label}(t)".format(label=src),
+                                         "{label}(t)".format(label=dst),
+                                         style="invis")
             for i, m_i in enumerate(instantaneous_matrix):
                 for j, m_i_j in enumerate(m_i):
                     if np.abs(m_i_j) > threshold:
                         instantaneous_graph.edge("{label}(t)".format(label=self.labels[j]),
                                                  "{label}(t)".format(label=self.labels[i]),
                                                  str(round(m_i_j, 3)))
+            instantaneous_graph.render("{output_name}(t)".format(output_name=output_name), cleanup=True)
             tau = self.matrixes.shape[0]
             lags = ["t_{0}".format(t) for t in range(1, tau)]
             layers = [Digraph("cluster_{lag}".format(lag=lag)) for lag in lags]
