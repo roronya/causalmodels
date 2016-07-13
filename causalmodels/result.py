@@ -13,7 +13,7 @@ class Result(ResultInterface):
 
     def plot(self, output_name="result", format="png", threshold=0):
         graph = Digraph(format=format)
-        graph.attr("graph", layout="dot", splines="true", overlap="false", concentrate="true")
+        graph.attr("graph", layout="dot", splines="true", overlap="false")
         graph.attr("node", shape="circle")
         for label in self.labels:
             graph.node(label)
