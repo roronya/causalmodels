@@ -194,11 +194,10 @@ class SVARDirectLiNGAMResult(ResultInterface):
             for layer in layers:
                 graph.subgraph(layer)
             for lag, matrix in zip(lags, self.matrixes):
-                if lag != "t":
-                    for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
-                        graph.edge("{label}({lag})".format(label=src, lag=lag),
-                                   "{label}({lag})".format(label=dst, lag=lag),
-                                   style="invis")
+                for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
+                    graph.edge("{label}({lag})".format(label=src, lag=lag),
+                               "{label}({lag})".format(label=dst, lag=lag),
+                               style="invis")
                 for i, m_i in enumerate(matrix):
                     for j, m_i_j in enumerate(m_i):
                         if np.abs(m_i_j) > threshold:
