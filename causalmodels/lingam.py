@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import scipy as sp
 import scipy.linalg
 import sklearn.linear_model as lm
@@ -141,73 +142,33 @@ class SVARDirectLiNGAMResult(ResultInterface):
         self.data = data
         self.labels = labels
 
-    def plot(self, output_name="result", format="png", separate=False, threshold=0):
-        if separate:
-            instantaneous_matrix = self.matrixes[0]
-            instantaneous_graph = Digraph("cluster_t", format=format)
-            instantaneous_graph.attr("node", shape="circle")
-            for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
-                instantaneous_graph.edge("{label}(t)".format(label=src),
-                                         "{label}(t)".format(label=dst),
-                                         style="invis")
-            for i, m_i in enumerate(instantaneous_matrix):
+    def plot(self, output_name="result", format="png", separate=False, threshold=0.0):
+        def generate_random_color():
+            return "#{:X}{:X}{:X}".format(*[random.randint(0, 255) for i in range(3)])
+        graph = Digraph(format=format)
+        graph.attr("graph", layout="dot", splines="true", overlap="false")
+        graph.attr("node", shape="circle")
+        legend = Digraph("cluster_legend")
+        legend.attr("graph", rankdir="LR")
+        legend.attr("node", style="invis")
+        lags = ["t"] + ["t_{}".format(i) for i in range(1, len(self.matrixes))]
+        for label in self.labels:
+            graph.node(label)
+        for lag, matrix in zip(lags, self.matrixes):
+            color = generate_random_color()
+            legend.edge("s_{}".format(lag),
+                        "d_{}".format(lag),
+                        lag,
+                        color=color)
+#            legend.node("s_{lag}".format(lag), style="invis")
+#            legend.node("d_{lag}".format(lag), style="invis")
+            for i, m_i in enumerate(matrix):
                 for j, m_i_j in enumerate(m_i):
-                    if np.abs(m_i_j) > threshold:
-                        instantaneous_graph.edge("{label}(t)".format(label=self.labels[j]),
-                                                 "{label}(t)".format(label=self.labels[i]),
-                                                 str(round(m_i_j, 3)))
-            instantaneous_graph.render("{output_name}(t)".format(output_name=output_name), cleanup=True)
-            tau = self.matrixes.shape[0]
-            lags = ["t_{0}".format(t) for t in range(1, tau)]
-            layers = [Digraph("cluster_{lag}".format(lag=lag)) for lag in lags]
-            graphs = [Digraph(format=format) for lag in lags]
-            for lag, matrix, layer, graph in zip(lags, self.matrixes[1:], layers, graphs):
-                layer.attr("node", shape="circle")
-                for label in self.labels:
-                    layer.node("{label}({lag})".format(label=label, lag=lag))
-                graph.subgraph(instantaneous_graph)
-                graph.subgraph(layer)
-                graph.attr("graph", layout="dot", splines="true", overlap="false")
-                for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
-                    graph.edge("{label}({lag})".format(label=src, lag=lag),
-                               "{label}({lag})".format(label=dst, lag=lag),
-                               style="invis")
-                for i, m_i in enumerate(matrix):
-                    for j, m_i_j in enumerate(m_i):
-                        if np.abs(m_i_j) > threshold:
-                            graph.edge("{label}({lag})".format(label=self.labels[j], lag=lag),
-                                       "{label}({lag})".format(label=self.labels[i], lag="t"),
-                                        str(round(m_i_j, 3)))
-                graph.render("{output_name}({lag})".format(output_name=output_name, lag=lag), cleanup=True)
-            return graphs
-        else:
-            graph = Digraph(format=format)
-            graph.attr("graph", layout="dot", splines="true", overlap="false")
-            graph.attr("node", shape="circle")
-            tau = self.matrixes.shape[0]
-            lags = ["t"] + ["t_{0}".format(t) for t in range(1, tau)]
-            layers = [Digraph("cluster_{0}".format(lag)) for lag in lags]
-            for lag, layer in zip(lags, layers):
-                layer.attr("graph", label=lag)
-                for label in self.labels:
-                    layer.node("{label}({lag})".format(label=label, lag=lag))
-            for layer in layers:
-                graph.subgraph(layer)
-            for lag, matrix in zip(lags, self.matrixes):
-                for src, dst in zip(self.labels[self.instantaneous_order][:-1], self.labels[self.instantaneous_order][1:]):
-                    graph.edge("{label}({lag})".format(label=src, lag=lag),
-                               "{label}({lag})".format(label=dst, lag=lag),
-                               style="invis")
-                for i, m_i in enumerate(matrix):
-                    for j, m_i_j in enumerate(m_i):
-                        if np.abs(m_i_j) > threshold:
-                            if lag == "t":
-                                graph.edge("{label}({lag})".format(label=self.labels[j], lag=lag),
-                                           "{label}({lag})".format(label=self.labels[i], lag=lag),
-                                           str(round(m_i_j, 3)))
-                            else:
-                                graph.edge("{label}({lag})".format(label=self.labels[j], lag=lag),
-                                           "{label}({lag})".format(label=self.labels[i], lag="t"),
-                                           str(round(m_i_j, 3)))
-            graph.render(output_name, cleanup=True)
-            return graph
+                    if np.abs(m_i_j) >= threshold:
+                        graph.edge(self.labels[j],
+                                   self.labels[i],
+                                   str(round(m_i_j, 3)),
+                                   color=color)
+        graph.subgraph(legend)
+        graph.render(output_name, cleanup=True)
+        return graph
