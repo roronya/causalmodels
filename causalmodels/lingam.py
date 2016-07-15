@@ -160,8 +160,6 @@ class SVARDirectLiNGAMResult(ResultInterface):
                         "d_{}".format(lag),
                         lag,
                         color=color)
-#            legend.node("s_{lag}".format(lag), style="invis")
-#            legend.node("d_{lag}".format(lag), style="invis")
             for i, m_i in enumerate(matrix):
                 for j, m_i_j in enumerate(m_i):
                     if np.abs(m_i_j) >= threshold:
