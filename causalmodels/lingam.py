@@ -92,14 +92,10 @@ class DirectLiNGAM(ModelInterface):
                 if k != X_m_index:
                     X[:, k] = residual(X[:, k], X[:, X_m_index])
             K.append(X_m_index)
-        # data を K 順に並び替える
         self.order = K
         B = self.estimate_coefficient(regression=regression, alpha=alpha, max_iter=max_iter)
-        # 元の順に戻す
-        P = np.eye(len(K))[K]
-        B = np.dot(np.dot(P.T, B), P)
         self.result = Result(order=K,
-                             matrix=B,
+                             permuted_matrix=B,
                              data=self.data,
                              labels=self.labels)
         return self.result
@@ -122,6 +118,7 @@ class SVARDirectLiNGAM(DirectLiNGAM):
         data = self.data[lag_order:] - var_result.forecast(self.data[0:lag_order], self.data.shape[0]-lag_order)
         super_result = super(SVARDirectLiNGAM, self).fit(regression=regression, alpha=alpha, max_iter=max_iter)
         B_0 = super_result.matrix
+        print(B_0)
         matrixes = np.empty((lag_order+1, B_0.shape[0], B_0.shape[1]))
         var_coefficient = var_result.coefs
         for i, m_i in enumerate(matrixes):
@@ -129,6 +126,9 @@ class SVARDirectLiNGAM(DirectLiNGAM):
                 matrixes[i] = B_0
             else:
                 matrixes[i] = np.linalg.solve(np.eye(B_0.shape[0]) - B_0, var_coefficient[i-1])
+        # 元の順に戻す
+        P = np.eye(len(K))[K]
+        B = np.dot(np.dot(P.T, B), P)
         self.result = SVARDirectLiNGAMResult(instantaneous_order=super_result.order,
                                              matrixes=matrixes,
                                              data=self.data,
