@@ -8,7 +8,7 @@ class TestConvolutionResultMethods(unittest.TestCase):
         permuted_instantaneous_matrix = np.array([[0, 0, 0],
                                                   [1, 0, 0],
                                                   [2, 3, 0]])
-        convolution_matrixes = np.array([
+        permuted_convolution_matrixes = np.array([
                                          [[0, 0, 1],
                                           [0, 2, 0],
                                           [3, 0, 0]],
@@ -24,7 +24,7 @@ class TestConvolutionResultMethods(unittest.TestCase):
         labels = np.array(['a', 'b', 'c'])
         self.r = ConvolutionResult(instantaneous_order=instantaneous_order,
                                    permuted_instantaneous_matrix=permuted_instantaneous_matrix,
-                                   convolution_matrixes=convolution_matrixes,
+                                   permuted_convolution_matrixes=permuted_convolution_matrixes,
                                    data=data, labels=labels)
 
     def test_order(self):
@@ -41,12 +41,12 @@ class TestConvolutionResultMethods(unittest.TestCase):
                           [[0, 0, 1],
                            [3, 0, 2],
                            [0, 0, 0]],
-                          [[0, 0, 1],
-                           [0, 2, 0],
-                           [3, 0, 0]],
-                          [[0, 1, 0],
-                           [0, 2, 0],
-                           [0, 3, 0]]])))
+                          [[2, 0, 0],
+                           [0, 0, 3],
+                           [0, 1, 0]],
+                          [[2, 0, 0],
+                           [3, 0, 0],
+                           [1, 0, 0]]])))
 
     def test_permuted_matrixes(self):
         self.assertIsNone(
@@ -56,12 +56,12 @@ class TestConvolutionResultMethods(unittest.TestCase):
                           [[0, 0, 0],
                            [1, 0, 0],
                            [2, 3, 0]],
-                          [[0, 3, 0],
-                           [1, 0, 0],
-                           [0, 0, 2]],
-                          [[0, 0, 3],
-                           [0, 0, 1],
-                           [0, 0, 2]]])))
+                          [[0, 0, 1],
+                           [0, 2, 0],
+                           [3, 0, 0]],
+                          [[0, 1, 0],
+                           [0, 2, 0],
+                           [0, 3, 0]]])))
 
     def test_data(self):
         self.assertIsNone(

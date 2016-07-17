@@ -53,7 +53,7 @@ class Result(ResultInterface):
         self._labels = labels
         self._permuted_labels = labels[self.order]
 
-    def plot(self, output_name="result", format="png", threshold=0):
+    def plot(self, output_name="result", format="png", threshold=0.01, decimal=3):
         graph = Digraph(format=format)
         graph.attr("graph", layout="dot", splines="true", overlap="false")
         graph.attr("node", shape="circle")
@@ -61,17 +61,17 @@ class Result(ResultInterface):
             graph.node(label)
         for i, m_i in enumerate(self.matrix):
             for j, m_i_j in enumerate(m_i):
-                if m_i_j != 0 and np.abs(m_i_j) >= threshold:
+                if np.abs(round(m_i_j, 3)) >= threshold:
                     graph.edge(self.labels[j],
                                self.labels[i],
-                               str(m_i_j))
+                               str(round(m_i_j, decimal)))
         graph.render(output_name, cleanup=True)
         return graph
 
 class ConvolutionResult(ResultInterface):
-    def __init__(self, instantaneous_order, permuted_instantaneous_matrix, convolution_matrixes, data, labels):
+    def __init__(self, instantaneous_order, permuted_instantaneous_matrix, permuted_convolution_matrixes, data, labels):
         self.instantaneous_order = instantaneous_order
-        self.matrixes = (permuted_instantaneous_matrix, convolution_matrixes)
+        self.matrixes = (permuted_instantaneous_matrix, permuted_convolution_matrixes)
         self.data = data
         self.labels = labels
 
@@ -86,26 +86,26 @@ class ConvolutionResult(ResultInterface):
     @matrixes.setter
     def matrixes(self, m):
         permuted_instantaneous_matrix = m[0]
-        convolution_matrixes = m[1]
+        permuted_convolution_matrixes = m[1]
         P = np.eye(len(self.instantaneous_order))[self.instantaneous_order]
         permuted_matrixes = np.empty((
-                                convolution_matrixes.shape[0] + 1,
+                                permuted_convolution_matrixes.shape[0] + 1,
                                 permuted_instantaneous_matrix.shape[0],
                                 permuted_instantaneous_matrix.shape[1]))
         for i, matrix in enumerate(permuted_matrixes):
             if i == 0:
                 permuted_matrixes[i] = permuted_instantaneous_matrix
             else:
-                permuted_matrixes[i] = np.dot(np.dot(P, convolution_matrixes[i - 1]), P.T)
+                permuted_matrixes[i] = permuted_convolution_matrixes[i - 1]
         matrixes = np.empty((
-                        convolution_matrixes.shape[0] + 1,
+                        permuted_convolution_matrixes.shape[0] + 1,
                         permuted_instantaneous_matrix.shape[0],
                         permuted_instantaneous_matrix.shape[1]))
         for i, matrix in enumerate(matrixes):
             if i == 0:
                 matrixes[i] = np.dot(np.dot(P.T, permuted_instantaneous_matrix), P)
             else:
-                matrixes[i] = convolution_matrixes[i - 1]
+                matrixes[i] = np.dot(np.dot(P.T, permuted_convolution_matrixes[i - 1]), P)
         self._permuted_matrixes = permuted_matrixes
         self._matrixes = matrixes
 

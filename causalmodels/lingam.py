@@ -8,8 +8,8 @@ from graphviz import Digraph
 from tqdm import tqdm, trange
 from causalmodels.interface import ModelInterface
 from causalmodels.result import Result
+from causalmodels.result import ConvolutionResult
 from causalmodels.exception import *
-from causalmodels.interface import ResultInterface
 
 def residual(X_j, X_i):
     return X_i - (np.cov(X_i, X_j, bias=1)[0][1] / np.var(X_j)) * X_j
@@ -117,56 +117,13 @@ class SVARDirectLiNGAM(DirectLiNGAM):
         lag_order = var_result.k_ar
         data = self.data[lag_order:] - var_result.forecast(self.data[0:lag_order], self.data.shape[0]-lag_order)
         super_result = super(SVARDirectLiNGAM, self).fit(regression=regression, alpha=alpha, max_iter=max_iter)
-        B_0 = super_result.matrix
-        print(B_0)
-        matrixes = np.empty((lag_order+1, B_0.shape[0], B_0.shape[1]))
+        B_0 = super_result.permuted_matrix
+        matrixes = np.empty((lag_order, B_0.shape[0], B_0.shape[1]))
         var_coefficient = var_result.coefs
         for i, m_i in enumerate(matrixes):
-            if i == 0:
-                matrixes[i] = B_0
-            else:
-                matrixes[i] = np.linalg.solve(np.eye(B_0.shape[0]) - B_0, var_coefficient[i-1])
-        # 元の順に戻す
-        P = np.eye(len(K))[K]
-        B = np.dot(np.dot(P.T, B), P)
-        self.result = SVARDirectLiNGAMResult(instantaneous_order=super_result.order,
-                                             matrixes=matrixes,
-                                             data=self.data,
-                                             labels=self.labels)
+            matrixes[i] = np.linalg.solve(np.eye(B_0.shape[0]) - B_0, var_coefficient[i-1])
+        self.result = ConvolutionResult(instantaneous_order=super_result.order,
+                                        permuted_instantaneous_matrix=super_result.permuted_matrix,
+                                        permuted_convolution_matrixes=matrixes,
+                                        data=self.data, labels=self.labels)
         return self.result
-
-class SVARDirectLiNGAMResult(ResultInterface):
-    def __init__(self, instantaneous_order, matrixes, data, labels):
-        self.instantaneous_order = instantaneous_order
-        self.matrixes = matrixes
-        self.data = data
-        self.labels = labels
-
-    def plot(self, output_name="result", format="png", separate=False, threshold=0.0):
-        def generate_random_color():
-            return "#{:X}{:X}{:X}".format(*[random.randint(0, 255) for i in range(3)])
-        graph = Digraph(format=format)
-        graph.attr("graph", layout="dot", splines="true", overlap="false")
-        graph.attr("node", shape="circle")
-        legend = Digraph("cluster_legend")
-        legend.attr("graph", rankdir="LR")
-        legend.attr("node", style="invis")
-        lags = ["t"] + ["t_{}".format(i) for i in range(1, len(self.matrixes))]
-        for label in self.labels:
-            graph.node(label)
-        for lag, matrix in zip(lags, self.matrixes):
-            color = generate_random_color()
-            legend.edge("s_{}".format(lag),
-                        "d_{}".format(lag),
-                        lag,
-                        color=color)
-            for i, m_i in enumerate(matrix):
-                for j, m_i_j in enumerate(m_i):
-                    if np.abs(m_i_j) >= threshold:
-                        graph.edge(self.labels[j],
-                                   self.labels[i],
-                                   str(round(m_i_j, 3)),
-                                   color=color)
-        graph.subgraph(legend)
-        graph.render(output_name, cleanup=True)
-        return graph
