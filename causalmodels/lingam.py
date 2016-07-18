@@ -121,7 +121,7 @@ class SVARDirectLiNGAM(DirectLiNGAM):
         matrixes = np.empty((lag_order, B_0.shape[0], B_0.shape[1]))
         var_coefficient = var_result.coefs
         for i, m_i in enumerate(matrixes):
-            matrixes[i] = np.linalg.solve(np.eye(B_0.shape[0]) - B_0, var_coefficient[i-1])
+            matrixes[i] = np.linalg.solve(np.eye(B_0.shape[0]) - B_0, var_coefficient[i])
         self.result = ConvolutionResult(instantaneous_order=super_result.order,
                                         permuted_instantaneous_matrix=super_result.permuted_matrix,
                                         permuted_convolution_matrixes=matrixes,
