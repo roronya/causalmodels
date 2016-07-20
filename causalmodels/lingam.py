@@ -112,16 +112,22 @@ class SVARDirectLiNGAM(DirectLiNGAM):
         var_result = self.var_model.fit(maxlags=maxlags, ic=ic)
         return var_result
 
-    def fit(self, regression="LinearRegression", alpha=0.1, max_iter=1000, maxlags=15, ic="aic"):
-        var_result = self.fit_var(self.data, maxlags=maxlags, ic=ic)
-        lag_order = var_result.k_ar
-        data = self.data[lag_order:] - var_result.forecast(self.data[0:lag_order], self.data.shape[0]-lag_order)
+    def fit(self, lag, regression="LinearRegression", alpha=0.1, max_iter=1000):
+        if regression == "ridge":
+            model = lm.RidgeCV()
+        elif regression == "lasso":
+            model = lm.Lasso(alpha=alpha)
+        else:
+            model = lm.LinearRegression()
+        result = model.fit(np.hstack([self.data[i:-lag+i] for i in range(lag)]), self.data[lag:]).coef_
+        var_coefficients = np.hsplit(result, lag)
+        self.data = self.data[lag:] - np.sum([np.dot(var_coefficient, self.data[i:-lag+i].T).T for i, var_coefficient in enumerate(var_coefficients)], axis=0)
         super_result = super(SVARDirectLiNGAM, self).fit(regression=regression, alpha=alpha, max_iter=max_iter)
         B_0 = super_result.permuted_matrix
-        matrixes = np.empty((lag_order, B_0.shape[0], B_0.shape[1]))
-        var_coefficient = var_result.coefs
-        for i, m_i in enumerate(matrixes):
-            matrixes[i] = np.linalg.solve(np.eye(B_0.shape[0]) - B_0, var_coefficient[i])
+        P = np.eye(B_0.shape[0])[super_result.order]
+        permuted_var_cofficients = [np.dot(np.dot(P, var_coefficient), P.T) for var_coefficient in var_coefficients]
+        I = np.eye(B_0.shape[0])
+        matrixes = np.array([np.dot(I-B_0, permuted_var_coefficent) for permuted_var_coefficent in permuted_var_cofficients])
         self.result = ConvolutionResult(instantaneous_order=super_result.order,
                                         permuted_instantaneous_matrix=super_result.permuted_matrix,
                                         permuted_convolution_matrixes=matrixes,
