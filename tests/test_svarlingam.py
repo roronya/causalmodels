@@ -26,7 +26,7 @@ class TestSVARLiNGAMMethods(unittest.TestCase):
         #X = pd.DataFrame({'x0': x[:, 1], 'x1': x[:, 0], 'x2': x[:, 2]})
         model = cm.SVARDirectLiNGAM(X.values, X.columns)
         result = model.fit(regression="lasso", lag=1, alpha=0.1)
-        result.plot(decimal=3)
+        result.plot(decimal=3, integration=True)
         print(result.instantaneous_order)
         print(result.matrixes)
         self.r = result

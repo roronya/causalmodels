@@ -136,31 +136,47 @@ class ConvolutionResult(ResultInterface):
         self._labels = labels
         self._permuted_labels = labels[self.instantaneous_order]
 
-    def plot(self, output_name="result", format="png", separate=False, decimal=3, threshold=0.01):
-        def generate_random_color():
-            return "#{:X}{:X}{:X}".format(*[random.randint(0, 255) for i in range(3)])
-        graph = Digraph(format=format)
-        graph.attr("graph", layout="dot", splines="true", overlap="false")
-        graph.attr("node", shape="circle")
-        legend = Digraph("cluster_legend")
-        legend.attr("graph", rankdir="LR")
-        legend.attr("node", style="invis")
-        lags = ["t"] + ["t_{}".format(i) for i in range(1, len(self.matrixes))]
-        for label in self.labels:
-            graph.node(label)
-        for lag, matrix in zip(lags, self.matrixes):
-            color = generate_random_color()
-            legend.edge("s_{}".format(lag),
-                        "d_{}".format(lag),
-                        lag,
-                        color=color)
-            for i, m_i in enumerate(matrix):
+    def plot(self, output_name="result", format="png", separate=False, decimal=3, threshold=0.01, integration=False):
+        if integration:
+            integration_matrix = self.matrixes.sum(axis=0)
+            graph = Digraph(format=format)
+            graph.attr("graph", layout="dot", splines="true", overlap="false")
+            graph.attr("node", shape="circle")
+            for label in self.labels:
+                graph.node(label)
+            for i, m_i in enumerate(integration_matrix):
                 for j, m_i_j in enumerate(m_i):
-                    if round(np.abs(m_i_j), decimal) >= threshold:
+                    if np.abs(round(m_i_j, decimal)) >= threshold:
                         graph.edge(self.labels[j],
                                    self.labels[i],
-                                   str(round(m_i_j, decimal)),
-                                   color=color)
-        graph.subgraph(legend)
-        graph.render(output_name, cleanup=True)
-        return graph
+                                   str(round(m_i_j, decimal)))
+            graph.render(output_name, cleanup=True)
+            return graph
+        else:
+            def generate_random_color():
+                return "#{:X}{:X}{:X}".format(*[random.randint(0, 255) for i in range(3)])
+            graph = Digraph(format=format)
+            graph.attr("graph", layout="dot", splines="true", overlap="false")
+            graph.attr("node", shape="circle")
+            legend = Digraph("cluster_legend")
+            legend.attr("graph", rankdir="LR")
+            legend.attr("node", style="invis")
+            lags = ["t"] + ["t_{}".format(i) for i in range(1, len(self.matrixes))]
+            for label in self.labels:
+                graph.node(label)
+            for lag, matrix in zip(lags, self.matrixes):
+                color = generate_random_color()
+                legend.edge("s_{}".format(lag),
+                            "d_{}".format(lag),
+                            lag,
+                            color=color)
+                for i, m_i in enumerate(matrix):
+                    for j, m_i_j in enumerate(m_i):
+                        if round(np.abs(m_i_j), decimal) >= threshold:
+                            graph.edge(self.labels[j],
+                                       self.labels[i],
+                                       str(round(m_i_j, decimal)),
+                                       color=color)
+            graph.subgraph(legend)
+            graph.render(output_name, cleanup=True)
+            return graph
