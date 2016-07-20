@@ -116,7 +116,7 @@ class SVARDirectLiNGAM(DirectLiNGAM):
         if regression == "ridge":
             model = lm.RidgeCV()
         elif regression == "lasso":
-            model = lm.Lasso(alpha=alpha)
+            model = lm.Lasso(alpha=alpha, max_iter=max_iter)
         else:
             model = lm.LinearRegression()
         result = model.fit(np.hstack([self.data[i:-lag+i] for i in range(lag)]), self.data[lag:]).coef_
