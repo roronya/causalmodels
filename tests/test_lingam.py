@@ -1,18 +1,32 @@
+import causalmodels as cm
 import numpy as np
 import pandas as pd
-import causalmodels as cm
+import unittest
 
-e1 = np.sin(np.arange(0, 30, 0.1))
-e2 = np.random.laplace(size=300)
-e3 = np.random.exponential(size=300)
+class TestLiNGAMMethods(unittest.TestCase):
+    def setUp(self):
+        e0 = np.sin(np.arange(0, 30, 0.1))
+        e1 = np.random.laplace(size=300)
+        e2 = np.random.exponential(size=300)
+        e = np.array([e0, e1, e2])
+        I = np.eye(3)
+        B = np.array([[0, 0, 0],
+                      [1, 0, 0],
+                      [1, 1, 0]])
+        X = np.linalg.solve(I-B, e)
+        data = pd.DataFrame(X.T, columns=['x0', 'x1', 'x2'])
+        model = cm.DirectLiNGAM(data.values, data.columns)
+        result = model.fit(regression="lasso")
+        result.plot(decimal=3)
+        print(result.order)
+        print(result.matrix)
+        self.r = result
 
-x1 = e1
-x2 = x1 + e2
-x3 = x1 + x2 + e3
+    def test_order(self):
+        self.assertIsNone(
+            np.testing.assert_array_equal(
+                self.r.order,
+                np.array([0, 1, 2])))
 
-data = pd.DataFrame({'x1': x1, 'x2': x2, 'x3': x3})
-model = cm.DirectLiNGAM(data.values, data.columns)
-result = model.fit(regression="lasso")
-print(result.order)
-print(result.matrix)
-result.plot(threshold=0.1, decimal=3)
+if __name__ == '__main__':
+    unittest.main()
