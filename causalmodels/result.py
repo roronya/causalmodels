@@ -56,7 +56,7 @@ class Result(ResultInterface):
     def plot(self, output_name="result", format="png", threshold=0.01, decimal=3):
         graph = Digraph(format=format)
         graph.attr("graph", layout="dot", splines="true", overlap="false")
-        graph.attr("node", shape="circle")
+        graph.attr("node", shape="box")
         for label in self.labels:
             graph.node(label)
         for i, m_i in enumerate(self.matrix):
@@ -141,7 +141,7 @@ class ConvolutionResult(ResultInterface):
             integration_matrix = self.matrixes.sum(axis=0)
             graph = Digraph(format=format)
             graph.attr("graph", layout="dot", splines="true", overlap="false")
-            graph.attr("node", shape="circle")
+            graph.attr("node", shape="box")
             for label in self.labels:
                 graph.node(label)
             for i, m_i in enumerate(integration_matrix):
@@ -157,7 +157,7 @@ class ConvolutionResult(ResultInterface):
                 return "#{:X}{:X}{:X}".format(*[random.randint(0, 255) for i in range(3)])
             graph = Digraph(format=format)
             graph.attr("graph", layout="dot", splines="true", overlap="false")
-            graph.attr("node", shape="circle")
+            graph.attr("node", shape="box")
             legend = Digraph("cluster_legend")
             legend.attr("graph", rankdir="LR")
             legend.attr("node", style="invis")
